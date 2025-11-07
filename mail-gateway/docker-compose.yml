@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: mailgateway
+      POSTGRES_USER: mailuser
+      POSTGRES_PASSWORD: mailpass123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mailuser -d mailgateway"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mailgateway
+    restart: unless-stopped
+
+  app:
+    build: .
+    environment:
+      # Database
+      DATABASE_URL: "postgresql+asyncpg://mailuser:mailpass123@postgres:5432/mailgateway"
+      
+      # Mail settings - configure these for your SMTP provider
+      SMTP_HOST: "smtp.gmail.com"
+      SMTP_PORT: "587"
+      SMTP_USER: "your-email@gmail.com"
+      SMTP_PASSWORD: "your-app-password"
+      SMTP_STARTTLS: "1"
+      FROM_EMAIL: "your-email@gmail.com"
+      
+      # Security
+      SECRET_KEY: "your-secret-key-change-me-in-production"
+      
+      # Rate limiting
+      DEFAULT_DAILY_LIMIT: "100"
+      
+      # Optional domain restrictions
+      # ALLOW_DOMAINS: "example.com,trusted.org"
+      
+      # App config
+      APP_NAME: "mail-gateway"
+      APP_VERSION: "0.1.0"
+      DEBUG: "true"
+      LOG_LEVEL: "INFO"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    networks:
+      - mailgateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  mailgateway:
+    driver: bridge

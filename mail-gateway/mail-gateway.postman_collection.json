@@ -1,0 +1,613 @@
+{
+  "info": {
+    "name": "Mail Gateway API",
+    "description": "Production-ready async FastAPI service for sending emails with API key authentication, atomic rate limiting, and comprehensive observability.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string",
+      "description": "Base URL for the Mail Gateway service"
+    },
+    {
+      "key": "api_key",
+      "value": "sk_test_default_key_123",
+      "type": "string",
+      "description": "API key for authentication"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Check if the service is healthy and operational"
+          },
+          "response": []
+        }
+      ],
+      "description": "Health check endpoints for monitoring"
+    },
+    {
+      "name": "Metrics",
+      "item": [
+        {
+          "name": "Prometheus Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/metrics",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "metrics"
+              ]
+            },
+            "description": "Get Prometheus metrics for monitoring and observability"
+          },
+          "response": []
+        }
+      ],
+      "description": "Monitoring and metrics endpoints"
+    },
+    {
+      "name": "Authentication Tests",
+      "item": [
+        {
+          "name": "Valid API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"test@example.com\",\n  \"subject\": \"Authentication Test\",\n  \"html_body\": \"<p>Testing valid API key authentication</p>\",\n  \"text_body\": \"Testing valid API key authentication\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Test sending email with valid API key"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "invalid_key_12345",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"test@example.com\",\n  \"subject\": \"Should Fail\",\n  \"html_body\": \"<p>This should fail with 401</p>\",\n  \"text_body\": \"This should fail with 401\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Test authentication failure with invalid API key (should return 401)"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"test@example.com\",\n  \"subject\": \"Should Fail\",\n  \"html_body\": \"<p>This should fail with 401</p>\",\n  \"text_body\": \"This should fail with 401\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Test authentication failure with missing API key (should return 401)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Test API key authentication scenarios"
+    },
+    {
+      "name": "Email Sending",
+      "item": [
+        {
+          "name": "Basic Email Send",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user@example.com\",\n  \"subject\": \"Welcome to Mail Gateway!\",\n  \"html_body\": \"<h1>Welcome!</h1><p>Thank you for trying our mail gateway service.</p>\",\n  \"text_body\": \"Welcome! Thank you for trying our mail gateway service.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Send a basic email with both HTML and text content"
+          },
+          "response": []
+        },
+        {
+          "name": "HTML Only Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user@example.com\",\n  \"subject\": \"HTML Newsletter\",\n  \"html_body\": \"<h2>Latest Updates</h2><ul><li>Feature A released</li><li>Bug fixes deployed</li><li>Performance improvements</li></ul><p>Best regards,<br>The Team</p>\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Send an email with only HTML content"
+          },
+          "response": []
+        },
+        {
+          "name": "Text Only Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user@example.com\",\n  \"subject\": \"Plain Text Alert\",\n  \"text_body\": \"ALERT: System maintenance scheduled for tonight at 2 AM UTC. Expected downtime: 30 minutes. Please plan accordingly.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Send an email with only plain text content"
+          },
+          "response": []
+        },
+        {
+          "name": "Email with Custom Headers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user@example.com\",\n  \"subject\": \"Important: Account Security Alert\",\n  \"html_body\": \"<h2>Security Alert</h2><p>We noticed a login from a new device. If this was you, no action needed.</p>\",\n  \"text_body\": \"Security Alert: We noticed a login from a new device. If this was you, no action needed.\",\n  \"headers\": {\n    \"Reply-To\": \"security@company.com\",\n    \"X-Priority\": \"1\",\n    \"X-Category\": \"security-alert\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Send an email with custom headers including Reply-To and priority"
+          },
+          "response": []
+        }
+      ],
+      "description": "Test email sending with various content types"
+    },
+    {
+      "name": "Validation Tests",
+      "item": [
+        {
+          "name": "Invalid Email Address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"not-an-email\",\n  \"subject\": \"Should Fail Validation\",\n  \"text_body\": \"This should fail with 422\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Test validation failure with invalid email address (should return 422)"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing Subject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user@example.com\",\n  \"text_body\": \"This should fail - no subject\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Test validation failure with missing subject (should return 422)"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing Body Content",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user@example.com\",\n  \"subject\": \"Empty Email\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Test validation failure with missing body content (should return 422)"
+          },
+          "response": []
+        },
+        {
+          "name": "Empty Subject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user@example.com\",\n  \"subject\": \"\",\n  \"text_body\": \"This should fail - empty subject\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Test validation failure with empty subject (should return 422)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Test request validation and error handling"
+    },
+    {
+      "name": "Rate Limiting Tests",
+      "item": [
+        {
+          "name": "Rate Limit Test 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user1@example.com\",\n  \"subject\": \"Rate Limit Test 1/15\",\n  \"text_body\": \"Testing rate limiting - email 1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Send email 1 for rate limit testing"
+          },
+          "response": []
+        },
+        {
+          "name": "Rate Limit Test 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user2@example.com\",\n  \"subject\": \"Rate Limit Test 2/15\",\n  \"text_body\": \"Testing rate limiting - email 2\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Send email 2 for rate limit testing"
+          },
+          "response": []
+        },
+        {
+          "name": "Rate Limit Test 3",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user3@example.com\",\n  \"subject\": \"Rate Limit Test 3/15\",\n  \"text_body\": \"Testing rate limiting - email 3\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "send"
+              ]
+            },
+            "description": "Send email 3 for rate limit testing"
+          },
+          "response": []
+        }
+      ],
+      "description": "Test rate limiting functionality (default limit is 15 emails per day)"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Add request timestamp",
+          "pm.globals.set('request_timestamp', new Date().toISOString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Common test assertions",
+          "pm.test('Response time is reasonable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has proper headers', function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});",
+          "",
+          "// Log response for debugging",
+          "console.log('Response status:', pm.response.status);",
+          "console.log('Response body:', pm.response.text());"
+        ]
+      }
+    }
+  ]
+}

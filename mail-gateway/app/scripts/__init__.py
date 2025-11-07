@@ -1,0 +1,1 @@
+"""API Key creation script for Mail Gateway."""
