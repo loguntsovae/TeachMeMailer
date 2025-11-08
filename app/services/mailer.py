@@ -112,9 +112,7 @@ class MailerService:
             )
 
             # Extract message ID from SMTP response
-            message_id = (
-                self._extract_message_id(result) or f"msg_{uuid.uuid4().hex[:12]}"
-            )
+            message_id = self._extract_message_id(result) or f"msg_{uuid.uuid4().hex[:12]}"
 
             logger.info(
                 "Email sent successfully",

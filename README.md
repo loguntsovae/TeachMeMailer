@@ -284,6 +284,8 @@ Automatic error tracking and performance monitoring:
 
 ## 🔧 Development Commands
 
+> **Development Flow**: Push all changes to `develop` → open PR to `main` after successful pipeline.
+
 ```bash
 # Development workflow
 make dev           # Start development environment

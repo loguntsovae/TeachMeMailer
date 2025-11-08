@@ -8,6 +8,25 @@ This project adheres to a code of conduct. By participating, you are expected to
 
 ## How to Contribute
 
+### Branch Management & Workflow
+
+**⚠️ Important**: This repository follows a protected main branch strategy:
+
+- **`main` branch**: Protected, production-ready code only
+- **`develop` branch**: Default for development and feature integration  
+- **Development Flow**: Push all changes to `develop` → open PR to `main` after successful pipeline
+
+```bash
+# Correct workflow:
+git checkout develop
+git pull origin develop
+# Make your changes
+git add .
+git commit -m "✨ Add new feature"
+git push origin develop
+# Then: Open PR from develop → main
+```
+
 ### Reporting Issues
 
 - Use the GitHub issue tracker to report bugs

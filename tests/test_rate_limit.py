@@ -23,17 +23,13 @@ class TestRateLimit:
         rate_limiter = AtomicRateLimitService(test_session, test_settings)
 
         # Test sending 5 emails (within limit)
-        result = await rate_limiter.check_and_increment_rate_limit(
-            api_key_id=api_key.id, email_count=5
-        )
+        result = await rate_limiter.check_and_increment_rate_limit(api_key_id=api_key.id, email_count=5)
 
         assert result.allowed is True
         assert result.current_count == 5
 
         # Test sending 3 more emails (still within limit)
-        result = await rate_limiter.check_and_increment_rate_limit(
-            api_key_id=api_key.id, email_count=3
-        )
+        result = await rate_limiter.check_and_increment_rate_limit(api_key_id=api_key.id, email_count=3)
 
         assert result.allowed is True
         assert result.current_count == 8
@@ -53,17 +49,13 @@ class TestRateLimit:
         rate_limiter = AtomicRateLimitService(test_session, test_settings)
 
         # Send exactly at limit
-        result = await rate_limiter.check_and_increment_rate_limit(
-            api_key_id=api_key.id, email_count=5
-        )
+        result = await rate_limiter.check_and_increment_rate_limit(api_key_id=api_key.id, email_count=5)
 
         assert result.allowed is True
         assert result.current_count == 5
 
         # Try to send 1 more (should fail)
-        result = await rate_limiter.check_and_increment_rate_limit(
-            api_key_id=api_key.id, email_count=1
-        )
+        result = await rate_limiter.check_and_increment_rate_limit(api_key_id=api_key.id, email_count=1)
 
         assert result.allowed is False
         assert result.current_count == 5  # Should not increment
@@ -84,9 +76,7 @@ class TestRateLimit:
         rate_limiter = AtomicRateLimitService(test_session, test_settings)
 
         # Try to send 5 emails (exceeds limit of 3)
-        result = await rate_limiter.check_and_increment_rate_limit(
-            api_key_id=api_key.id, email_count=5
-        )
+        result = await rate_limiter.check_and_increment_rate_limit(api_key_id=api_key.id, email_count=5)
 
         assert result.allowed is False
         assert result.current_count == 0  # Should not increment
@@ -109,9 +99,7 @@ class TestRateLimit:
         # Send emails in multiple batches to test atomic behavior
         results = []
         for i in range(10):
-            result = await rate_limiter.check_and_increment_rate_limit(
-                api_key_id=api_key.id, email_count=2
-            )
+            result = await rate_limiter.check_and_increment_rate_limit(api_key_id=api_key.id, email_count=2)
             results.append(result)
 
         # All should succeed (10 * 2 = 20 emails, at limit)
@@ -140,9 +128,7 @@ class TestRateLimit:
         assert usage.count == 20
 
         # One more attempt should fail
-        result = await rate_limiter.check_and_increment_rate_limit(
-            api_key_id=api_key.id, email_count=1
-        )
+        result = await rate_limiter.check_and_increment_rate_limit(api_key_id=api_key.id, email_count=1)
         assert result.allowed is False
 
     async def test_zero_increment_usage_check(self, test_session, test_settings):
@@ -160,20 +146,14 @@ class TestRateLimit:
         rate_limiter = AtomicRateLimitService(test_session, test_settings)
 
         # Send some emails first
-        await rate_limiter.check_and_increment_rate_limit(
-            api_key_id=api_key.id, email_count=15
-        )
+        await rate_limiter.check_and_increment_rate_limit(api_key_id=api_key.id, email_count=15)
 
         # Check usage with 0 increment
-        result = await rate_limiter.check_and_increment_rate_limit(
-            api_key_id=api_key.id, email_count=0
-        )
+        result = await rate_limiter.check_and_increment_rate_limit(api_key_id=api_key.id, email_count=0)
 
         assert result.allowed is True
         assert result.current_count == 15
 
         # Verify count didn't change
-        result2 = await rate_limiter.check_and_increment_rate_limit(
-            api_key_id=api_key.id, email_count=0
-        )
+        result2 = await rate_limiter.check_and_increment_rate_limit(api_key_id=api_key.id, email_count=0)
         assert result2.current_count == 15

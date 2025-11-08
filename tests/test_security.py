@@ -32,8 +32,12 @@ class TestSecurity:
         assert response.status_code == 401
         assert "X-API-Key header" in response.json()["detail"]
 
-    async def test_request_size_limiting(self, client, test_session):
+    @patch("app.services.mailer.MailerService.send_email")
+    async def test_request_size_limiting(self, mock_send_email, client, test_session):
         """Test request size limiting at 256KB."""
+        # Setup mock
+        mock_send_email.return_value = "msg_security_test"
+
         # Create valid API key for test
         import bcrypt
 
@@ -42,9 +46,7 @@ class TestSecurity:
         plain_key = "size-test-key"
         hashed_key = bcrypt.hashpw(plain_key.encode(), bcrypt.gensalt()).decode()
 
-        api_key = APIKey(
-            name="Size Test Key", key_hash=hashed_key, daily_limit=10, is_active=True
-        )
+        api_key = APIKey(name="Size Test Key", key_hash=hashed_key, daily_limit=10, is_active=True)
         test_session.add(api_key)
         await test_session.commit()
 
@@ -55,9 +57,7 @@ class TestSecurity:
             "text": "Normal message",
         }
 
-        response = await client.post(
-            "/api/v1/send", json=normal_payload, headers={"X-API-Key": plain_key}
-        )
+        response = await client.post("/api/v1/send", json=normal_payload, headers={"X-API-Key": plain_key})
         assert response.status_code == 202  # Should succeed
 
         # Test oversized request (>256KB)
@@ -200,19 +200,13 @@ class TestSecurity:
 
     async def test_smtp_credentials_not_logged(self):
         """Test that SMTP credentials never appear in logs."""
-        from unittest.mock import Mock, patch
+        from unittest.mock import patch
 
         from app.core.config import Settings
         from app.services.mailer import MailerService
 
         # Create settings with SMTP credentials
         settings = Settings(
-            DATABASE_URL="postgresql://user:pass@localhost/testdb",
-            SMTP_HOST="smtp.test.com",
-            SMTP_PORT=587,
-            SMTP_USER="test@test.com",
-            SMTP_PASSWORD="secret_password",
-            FROM_EMAIL="test@test.com",
             SECRET_KEY="test-secret-key-32-chars-long-here",
         )
 
@@ -222,9 +216,7 @@ class TestSecurity:
         with patch("app.services.mailer.logger") as mock_logger:
             # Attempt to send email (will fail due to mocking, but should log)
             try:
-                await mailer.send_email(
-                    to=["test@example.com"], subject="Test", text="Test message"
-                )
+                await mailer.send_email(to=["test@example.com"], subject="Test", text="Test message")
             except Exception:
                 pass  # Expected to fail due to mocking
 
@@ -232,9 +224,7 @@ class TestSecurity:
             assert mock_logger.info.called or mock_logger.error.called
 
             # Verify no log call contains SMTP credentials
-            for call in (
-                mock_logger.info.call_args_list + mock_logger.error.call_args_list
-            ):
+            for call in mock_logger.info.call_args_list + mock_logger.error.call_args_list:
                 args, kwargs = call
                 log_content = str(args) + str(kwargs)
 

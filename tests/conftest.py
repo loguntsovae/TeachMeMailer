@@ -1,4 +1,5 @@
 import asyncio
+import subprocess
 
 import pytest
 from httpx import AsyncClient
@@ -9,8 +10,8 @@ from app.core.config import Settings
 from app.db.base import Base
 from app.main import create_app
 
-# Test database URL (use sqlite for testing)
-TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+# Test database URL (use PostgreSQL for testing)
+TEST_DATABASE_URL = "postgresql+asyncpg://test_user:test_password@localhost:5432/test_db"
 
 
 @pytest.fixture(scope="session")
@@ -21,20 +22,19 @@ def event_loop():
     loop.close()
 
 
+@pytest.fixture(scope="session", autouse=True)
+def setup_db():
+    """Apply migrations before tests and rollback after."""
+    subprocess.run(["uv", "run", "alembic", "upgrade", "head"], check=True)
+    yield
+    subprocess.run(["uv", "run", "alembic", "downgrade", "base"], check=True)
+
+
 @pytest.fixture(scope="session")
 async def test_engine():
     """Create test database engine."""
     engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-
-    # Create all tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     yield engine
-
-    # Clean up
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
 
@@ -55,12 +55,6 @@ async def test_session(test_engine):
 def test_settings():
     """Create test settings."""
     return Settings(
-        DATABASE_URL="postgresql://user:pass@localhost/testdb",
-        SMTP_HOST="smtp.test.com",
-        SMTP_PORT=587,
-        SMTP_USER="test@test.com",
-        SMTP_PASSWORD="testpass",
-        FROM_EMAIL="test@test.com",
         SECRET_KEY="test-secret-key-32-chars-long-here",
         DEBUG=True,
     )
@@ -94,7 +88,5 @@ async def client(test_app):
     """Create test HTTP client."""
     from httpx import ASGITransport
 
-    async with AsyncClient(
-        transport=ASGITransport(app=test_app), base_url="http://testserver"
-    ) as ac:
+    async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://testserver") as ac:
         yield ac

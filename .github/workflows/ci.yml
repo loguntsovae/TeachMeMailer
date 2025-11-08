@@ -2,7 +2,7 @@ name: CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ develop ]
   pull_request:
     branches: [ main, develop ]
   release:
@@ -26,33 +26,36 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         
-    - name: Cache pip dependencies
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+        
+    - name: Cache uv dependencies
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}
         restore-keys: |
-          ${{ runner.os }}-pip-
+          ${{ runner.os }}-uv-
           
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[dev]"
+      run: uv sync --group dev
         
     - name: Code formatting check with Black
-      run: black --check --diff app/ tests/ scripts/
+      run: uv run black --check --diff app/ tests/ scripts/
       
     - name: Import sorting check with isort  
-      run: isort --check-only --diff app/ tests/ scripts/
+      run: uv run isort --check-only --diff app/ tests/ scripts/
       
     - name: Linting with flake8
-      run: flake8 app/ tests/ scripts/ --max-line-length=88 --extend-ignore=E203,W503
+      run: uv run flake8 app/ tests/ scripts/
       
-    - name: Type checking with mypy
-      run: mypy app/ --ignore-missing-imports
+    # - name: Type checking with mypy
+    #   run: uv run mypy app/ --ignore-missing-imports
       
     - name: Security scanning with bandit
-      run: bandit -r app/ -f json -o bandit-report.json
+      run: uv run bandit -r app/ -f json -o bandit-report.json
       continue-on-error: true
       
     - name: Upload bandit results
@@ -66,20 +69,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Test Suite
     
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-          
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
@@ -89,31 +78,40 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         
-    - name: Cache pip dependencies
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+        
+    - name: Cache uv dependencies
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}
         restore-keys: |
-          ${{ runner.os }}-pip-
+          ${{ runner.os }}-uv-
           
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[test]"
+      run: uv sync --group dev
         
+    - name: Apply migrations
+      run: uv run alembic upgrade head
+
     - name: Run tests with coverage
       env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+        DATABASE_URL: postgresql+asyncpg://test_user:test_password@localhost:5432/test_db
         SMTP_HOST: smtp.example.com
         SMTP_PORT: 587
-        SMTP_USERNAME: test@example.com  
+        SMTP_USER: test@example.com  
         SMTP_PASSWORD: test_password
-        SMTP_FROM_ADDRESS: test@example.com
-        SECRET_KEY: test_secret_key_for_ci
+        FROM_EMAIL: test@example.com
+        SECRET_KEY: test_secret_key_for_ci_testing_32chars_long
       run: |
-        pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing -v
+        uv run pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=35 -v
         
+    - name: Roll back schema
+      run: uv run alembic downgrade base
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:

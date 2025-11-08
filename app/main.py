@@ -25,7 +25,7 @@ sentry_sdk.init(
 
 
 # Configure structured logging
-def mask_sensitive_data(event_dict):
+def mask_sensitive_data(logger, method_name, event_dict):
     """Mask sensitive data in log events."""
     SENSITIVE_KEYS = {
         "password",
@@ -38,7 +38,7 @@ def mask_sensitive_data(event_dict):
         "smtp_user",
         "api_key",
         "x_api_key",
-        "secret_key",
+        "app_secret_key",
         "database_url",
     }
 
@@ -54,11 +54,7 @@ def mask_sensitive_data(event_dict):
             return masked
         elif isinstance(data, str):
             # Mask values that look like credentials (long strings with mixed case/numbers)
-            if (
-                len(data) > 20
-                and any(c.isdigit() for c in data)
-                and any(c.isupper() for c in data)
-            ):
+            if len(data) > 20 and any(c.isdigit() for c in data) and any(c.isupper() for c in data):
                 return f"{data[:4]}***MASKED***{data[-4:]}"
             return data
         elif isinstance(data, list):

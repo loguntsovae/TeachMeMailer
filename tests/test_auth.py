@@ -13,9 +13,7 @@ class TestAuth:
         plain_key = "test-api-key-12345"
         hashed_key = bcrypt.hashpw(plain_key.encode(), bcrypt.gensalt()).decode()
 
-        api_key = APIKey(
-            name="Test Key", key_hash=hashed_key, daily_limit=100, is_active=True
-        )
+        api_key = APIKey(name="Test Key", key_hash=hashed_key, daily_limit=100, is_active=True)
         test_session.add(api_key)
         await test_session.commit()
 
@@ -53,9 +51,7 @@ class TestAuth:
         plain_key = "inactive-key-12345"
         hashed_key = bcrypt.hashpw(plain_key.encode(), bcrypt.gensalt()).decode()
 
-        api_key = APIKey(
-            name="Inactive Key", key_hash=hashed_key, daily_limit=100, is_active=False
-        )
+        api_key = APIKey(name="Inactive Key", key_hash=hashed_key, daily_limit=100, is_active=False)
         test_session.add(api_key)
         await test_session.commit()
 
@@ -77,9 +73,7 @@ class TestAuth:
         plain_key = "test-password-123"
         hashed_key = bcrypt.hashpw(plain_key.encode(), bcrypt.gensalt()).decode()
 
-        api_key = APIKey(
-            name="Test Key", key_hash=hashed_key, daily_limit=50, is_active=True
-        )
+        api_key = APIKey(name="Test Key", key_hash=hashed_key, daily_limit=50, is_active=True)
         test_session.add(api_key)
         await test_session.commit()
 
