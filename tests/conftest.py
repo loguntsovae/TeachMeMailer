@@ -1,6 +1,10 @@
 import asyncio
 import subprocess
-
+import os
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from alembic.config import Config
+from alembic import command
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -11,7 +15,8 @@ from app.db.base import Base
 from app.main import create_app
 
 # Test database URL (use PostgreSQL for testing)
-TEST_DATABASE_URL = "postgresql+asyncpg://test_user:test_password@localhost:5432/test_db"
+TEST_DATABASE_NAME = "devdb"
+TEST_DATABASE_URL = f"postgresql+asyncpg://postgres:postgres@localhost:5432/{TEST_DATABASE_NAME}"
 
 
 @pytest.fixture(scope="session")
@@ -24,7 +29,25 @@ def event_loop():
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_db():
-    """Apply migrations before tests and rollback after."""
+    """Create test DB if missing, apply migrations before tests, rollback after."""
+    os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+
+    # Connect to default postgres database
+    conn = psycopg2.connect("dbname=postgres user=postgres password=postgres host=localhost")
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    cur = conn.cursor()
+    cur.execute(f"SELECT 1 FROM pg_database WHERE datname = '{TEST_DATABASE_NAME}'")
+    exists = cur.fetchone()
+
+    if not exists:
+        print(f"Creating test database '{TEST_DATABASE_NAME}'...")
+        cur.execute(f"CREATE DATABASE {TEST_DATABASE_NAME}")
+    else:
+        print(f"Database '{TEST_DATABASE_NAME}' already exists")
+
+    cur.close()
+    conn.close()
+
     subprocess.run(["uv", "run", "alembic", "upgrade", "head"], check=True)
     yield
     subprocess.run(["uv", "run", "alembic", "downgrade", "base"], check=True)
@@ -55,8 +78,13 @@ async def test_session(test_engine):
 def test_settings():
     """Create test settings."""
     return Settings(
-        SECRET_KEY="test-secret-key-32-chars-long-here",
         DEBUG=True,
+        DATABASE_URL=TEST_DATABASE_URL,
+        SMTP_HOST="test_smtp_host",
+        SMTP_USER="test_user",
+        SMTP_PASSWORD="test_password",
+        FROM_EMAIL="test@example.com",
+        APP_SECRET_KEY="x" * 32,
     )
 
 
