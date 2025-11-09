@@ -14,8 +14,9 @@
           {% if type == 'api_keys' %}
             <th>ID</th>
             <th>Name</th>
-            <th>Active</th>
-            <th>Daily limit</th>
+                <th>Active</th>
+                <th>Daily limit</th>
+                <th>Allowed recipients</th>
             <th>Created</th>
           {% elif type == 'daily_usage' %}
             <th>ID</th>
@@ -38,6 +39,7 @@
               <td>{{ it.name }}</td>
               <td>{{ it.is_active }}</td>
               <td>{{ it.daily_limit }}</td>
+              <td>{% if it.allowed_recipients %}{{ it.allowed_recipients | join(", ") }}{% else %}&mdash;{% endif %}</td>
               <td>{{ it.created_at }}</td>
               <td>
                 {% if it.is_active %}

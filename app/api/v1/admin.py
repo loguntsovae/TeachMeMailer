@@ -100,11 +100,21 @@ async def create_api_key(
     request: Request,
     name: str = Form(...),
     daily_limit: int | None = Form(None),
+    allowed: str | None = Form(None),
     db: AsyncSession = Depends(get_db),
     settings=Depends(get_settings_dependency),
 ):
     auth = AuthService(db, settings)
-    key_obj, plain_key = await auth.create_api_key(name=name, daily_limit=daily_limit)
+    # parse allowed recipients from comma-separated form field
+    allowed_list = None
+    if allowed:
+        allowed_list = [e.strip().lower() for e in allowed.split(",") if e.strip()]
+
+    key_obj, plain_key = await auth.create_api_key(
+        name=name,
+        daily_limit=daily_limit,
+        allowed_recipients=allowed_list,
+    )
 
     # Render a page with the plain key (only shown once)
     return templates.TemplateResponse(

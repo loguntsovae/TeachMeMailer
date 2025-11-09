@@ -86,6 +86,7 @@ class AuthService:
         self,
         name: str,
         daily_limit: Optional[int] = None,
+        allowed_recipients: Optional[list[str]] = None,
     ) -> tuple[APIKey, str]:
         """Create a new API key.
 
@@ -105,11 +106,16 @@ class AuthService:
             )
             daily_limit = None
 
+        # Normalize allowed_recipients: lower-case and strip
+        if allowed_recipients:
+            allowed_recipients = [e.strip().lower() for e in allowed_recipients if e and e.strip()]
+
         # Create API key object
         key_obj = APIKey(
             key_hash=key_hash,
             name=name,
             daily_limit=daily_limit,
+            allowed_recipients=allowed_recipients,
             is_active=True,
         )
 

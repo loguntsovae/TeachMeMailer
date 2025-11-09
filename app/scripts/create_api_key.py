@@ -75,7 +75,9 @@ async def check_name_exists(session: AsyncSession, name: str) -> bool:
     return result.scalar_one_or_none() is not None
 
 
-async def create_api_key_record(session: AsyncSession, name: str, key_hash: str, daily_limit: int) -> APIKey:
+async def create_api_key_record(
+    session: AsyncSession, name: str, key_hash: str, daily_limit: int, allowed_recipients: list | None = None
+) -> APIKey:
     """Create and save an API key record to the database.
 
     Args:
@@ -87,7 +89,13 @@ async def create_api_key_record(session: AsyncSession, name: str, key_hash: str,
     Returns:
         The created APIKey object
     """
-    api_key = APIKey(name=name, key_hash=key_hash, daily_limit=daily_limit, is_active=True)
+    api_key = APIKey(
+        name=name,
+        key_hash=key_hash,
+        daily_limit=daily_limit,
+        allowed_recipients=allowed_recipients,
+        is_active=True,
+    )
 
     session.add(api_key)
     await session.commit()
@@ -132,6 +140,13 @@ Make sure to save it securely.
         help="Total length of the generated API key (default: %(default)s)",
     )
 
+    parser.add_argument(
+        "--allowed",
+        type=str,
+        default=None,
+        help="Comma-separated list of allowed recipient emails for this API key (optional)",
+    )
+
     parser.add_argument("--prefix", default="sk_", help="Prefix for the API key (default: %(default)s)")
 
     args = parser.parse_args()
@@ -167,6 +182,11 @@ Make sure to save it securely.
             print("Hashing API key...")
             key_hash = hash_api_key(api_key)
 
+            # Parse allowed recipients
+            allowed_list = None
+            if args.allowed:
+                allowed_list = [e.strip().lower() for e in args.allowed.split(",") if e.strip()]
+
             # Create database record
             print("Saving to database...")
             api_key_record = await create_api_key_record(
@@ -174,6 +194,7 @@ Make sure to save it securely.
                 name=args.name,
                 key_hash=key_hash,
                 daily_limit=args.limit,
+                allowed_recipients=allowed_list,
             )
 
             # Success output
