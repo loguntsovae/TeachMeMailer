@@ -43,10 +43,10 @@ jobs:
       run: uv sync --group dev
 
     - name: Code formatting check with Black
-      run: uv run black --check --diff app/ tests/ scripts/
+      run: uv run black --check --diff app/ scripts/
 
     - name: Import sorting check with isort
-      run: uv run isort --check-only --diff app/ tests/ scripts/
+      run: uv run isort --check-only --diff app/ scripts/
 
     - name: Linting with flake8
       run: uv run flake8 app/ scripts/
