@@ -70,6 +70,9 @@ FROM base AS production
 # Development stage
 FROM base AS development
 
+# Switch to root user
+USER root
+
 # Install development dependencies (ensure bash is available)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
