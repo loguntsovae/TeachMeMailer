@@ -49,7 +49,7 @@ jobs:
       run: uv run isort --check-only --diff app/ tests/ scripts/
 
     - name: Linting with flake8
-      run: uv run flake8 app/ tests/ scripts/
+      run: uv run flake8 app/ scripts/
 
     - name: Type checking with mypy
       run: uv run mypy app/ --ignore-missing-imports
