@@ -49,6 +49,7 @@ def mask_sensitive_data(logger, method_name, event_dict):
     }
 
     def mask_dict(data, path=""):
+        return data  # TODO cahnge me
         if isinstance(data, dict):
             masked = {}
             for key, value in data.items():

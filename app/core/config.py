@@ -197,13 +197,7 @@ def get_settings() -> Settings:
         # mypy sees required named args on the generated Settings signature;
         # in runtime pydantic reads environment variables so calling with no
         # args is valid. Silence the false-positive here.
-        return Settings(
-            SMTP_HOST="smtp.example.com",
-            SMTP_USER="user@example.com",
-            SMTP_PASSWORD="password",
-            FROM_EMAIL="noreply@example.com",
-            APP_SECRET_KEY="x" * 32,
-        )
+        return Settings()
     except Exception as e:
         print(f"❌ Configuration Error: {e}")
         print("💡 Check your environment variables and .env file")
