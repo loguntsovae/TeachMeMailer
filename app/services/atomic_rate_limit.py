@@ -50,33 +50,31 @@ class AtomicRateLimitService:
                     self.old_count = old_count
 
             try:
-                # start a transaction block so FOR UPDATE locking works as expected
-                async with self.db.begin():
-                    stmt = (
-                        select(DailyUsage)
-                        .where(DailyUsage.api_key_id == api_key_id, DailyUsage.day == today)
-                        .with_for_update()
-                    )
-                    res = await self.db.execute(stmt)
-                    usage = res.scalar_one_or_none()
+                stmt = (
+                    select(DailyUsage)
+                    .where(DailyUsage.api_key_id == api_key_id, DailyUsage.day == today)
+                    .with_for_update()
+                )
+                res = await self.db.execute(stmt)
+                usage = res.scalar_one_or_none()
 
-                    if usage is None:
-                        # create a new row
-                        usage = DailyUsage(api_key_id=api_key_id, day=today, count=email_count)
-                        self.db.add(usage)
-                        # flush to assign DB defaults / persist
-                        await self.db.flush()
-                        old_count = 0
-                        new_count = usage.count
-                    else:
-                        old_count = usage.count
-                        usage.count = usage.count + email_count
-                        new_count = usage.count
+                if usage is None:
+                    # create a new row
+                    usage = DailyUsage(api_key_id=api_key_id, day=today, count=email_count)
+                    self.db.add(usage)
+                    # flush to assign DB defaults / persist
+                    await self.db.flush()
+                    old_count = 0
+                    new_count = usage.count
+                else:
+                    old_count = usage.count
+                    usage.count = usage.count + email_count
+                    new_count = usage.count
 
-                    # If the new count exceeds the limit, raise to rollback the transaction
-                    if new_count > effective_limit:
-                        # raising will rollback the current transaction
-                        raise _RateLimitExceeded(old_count)
+                # If the new count exceeds the limit, raise to rollback the transaction
+                if new_count > effective_limit:
+                    # raising will rollback the current transaction
+                    raise _RateLimitExceeded(old_count)
 
                 # if we reach here the transaction committed successfully
                 logger.info(
@@ -115,20 +113,19 @@ class AtomicRateLimitService:
                     pass
 
                 try:
-                    async with self.db.begin():
-                        stmt = (
-                            select(DailyUsage)
-                            .where(DailyUsage.api_key_id == api_key_id, DailyUsage.day == today)
-                            .with_for_update()
-                        )
-                        res = await self.db.execute(stmt)
-                        usage = res.scalar_one()
-                        old_count = usage.count
-                        usage.count = usage.count + email_count
-                        new_count = usage.count
+                    stmt = (
+                        select(DailyUsage)
+                        .where(DailyUsage.api_key_id == api_key_id, DailyUsage.day == today)
+                        .with_for_update()
+                    )
+                    res = await self.db.execute(stmt)
+                    usage = res.scalar_one_or_none()
+                    old_count = usage.count
+                    usage.count = usage.count + email_count
+                    new_count = usage.count
 
-                        if new_count > effective_limit:
-                            raise _RateLimitExceeded(old_count)
+                    if new_count > effective_limit:
+                        raise _RateLimitExceeded(old_count)
 
                     logger.info(
                         "Rate limit check passed (retry)",
