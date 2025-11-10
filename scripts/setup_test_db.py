@@ -69,11 +69,11 @@ async def verify_test_database():
 
         # Create mailer schema if it doesn't exist
         await conn.execute("CREATE SCHEMA IF NOT EXISTS mailer")
-        print(f"✓ Schema 'mailer' created/verified")
+        print("✓ Schema 'mailer' created/verified")
 
         # Test connection
         version = await conn.fetchval("SELECT version()")
-        print(f"✓ Connected to test database")
+        print("✓ Connected to test database")
         print(f"  PostgreSQL version: {version.split(',')[0]}")
 
         await conn.close()
