@@ -10,12 +10,9 @@ Tests cover:
 """
 
 import uuid
-from unittest.mock import AsyncMock, MagicMock
 
-import bcrypt
 import pytest
 
-from app.models.api_key import APIKey
 from app.services.auth import AuthResult, AuthService
 
 
@@ -73,7 +70,7 @@ class TestAuthServiceValidation:
 
         result, key_obj = await auth_service.validate_api_key_detailed(raw_key)
 
-        assert result == AuthResult.VALID
+        assert result.value == AuthResult.VALID.value
         assert key_obj is not None
         assert key_obj.id == api_key.id
         assert key_obj.is_active is True
@@ -144,7 +141,8 @@ class TestAuthServiceCreation:
 
         # Verify the key can be validated
         result, validated_key = await auth_service.validate_api_key_detailed(raw_key)
-        assert result == AuthResult.VALID
+        assert result.value == AuthResult.VALID.value
+        assert validated_key is not None
         assert validated_key.id == key_obj.id
 
     async def test_create_api_key_with_daily_limit(self, db_session, test_settings):
@@ -235,7 +233,7 @@ class TestAuthServiceDeactivation:
 
         # Verify validation fails
         validation_result, _ = await auth_service.validate_api_key_detailed(raw_key)
-        assert validation_result == AuthResult.INACTIVE
+        assert validation_result.value == AuthResult.INACTIVE.value
 
     async def test_deactivate_nonexistent_key(self, db_session, test_settings):
         """Test deactivating a non-existent API key."""

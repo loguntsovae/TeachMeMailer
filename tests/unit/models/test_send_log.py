@@ -6,6 +6,7 @@ from datetime import datetime
 import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.api_key import APIKey
 from app.models.send_log import SendLog
@@ -14,7 +15,7 @@ from app.models.send_log import SendLog
 class TestSendLogModel:
     """Tests for SendLog model creation and validation."""
 
-    async def test_create_send_log_minimal(self, db_session, test_api_key):
+    async def test_create_send_log_minimal(self, db_session: AsyncSession, test_api_key: APIKey):
         """Test creating a send log with minimal required fields."""
         log = SendLog(api_key_id=test_api_key.id, recipient="test@example.com")
         db_session.add(log)
@@ -28,7 +29,7 @@ class TestSendLogModel:
         assert isinstance(log.sent_at, datetime)
         assert log.message_id is None
 
-    async def test_create_send_log_with_message_id(self, db_session, test_api_key):
+    async def test_create_send_log_with_message_id(self, db_session: AsyncSession, test_api_key: APIKey):
         """Test creating a send log with message_id."""
         message_id = "<unique-msg-id-123@example.com>"
         log = SendLog(api_key_id=test_api_key.id, recipient="user@example.com", message_id=message_id)
@@ -38,7 +39,7 @@ class TestSendLogModel:
 
         assert log.message_id == message_id
 
-    async def test_send_log_sent_at_auto_set(self, db_session, test_api_key):
+    async def test_send_log_sent_at_auto_set(self, db_session: AsyncSession, test_api_key: APIKey):
         """Test that sent_at is automatically set by the database."""
         log = SendLog(api_key_id=test_api_key.id, recipient="test@example.com")
         db_session.add(log)
@@ -49,7 +50,7 @@ class TestSendLogModel:
         assert isinstance(log.sent_at, datetime)
         # Just verify it's set, timezone handling can vary
 
-    async def test_send_log_multiple_logs_same_key(self, db_session, test_api_key):
+    async def test_send_log_multiple_logs_same_key(self, db_session: AsyncSession, test_api_key: APIKey):
         """Test creating multiple logs for same API key."""
         log1 = SendLog(api_key_id=test_api_key.id, recipient="user1@example.com", message_id="msg-1")
         log2 = SendLog(api_key_id=test_api_key.id, recipient="user2@example.com", message_id="msg-2")
@@ -63,7 +64,7 @@ class TestSendLogModel:
 
         assert len(logs) >= 3
 
-    async def test_send_log_multiple_logs_different_keys(self, db_session):
+    async def test_send_log_multiple_logs_different_keys(self, db_session: AsyncSession):
         """Test creating logs for different API keys."""
         # Create two API keys with unique hashes
         key1 = APIKey(key_hash=f"key1_hash_{uuid.uuid4().hex[:8]}", name="Key 1")
@@ -83,7 +84,7 @@ class TestSendLogModel:
         assert result1.scalar_one().recipient == "user1@example.com"
         assert result2.scalar_one().recipient == "user2@example.com"
 
-    async def test_send_log_repr(self, db_session, test_api_key):
+    async def test_send_log_repr(self, db_session: AsyncSession, test_api_key: APIKey):
         """Test string representation of SendLog."""
         log = SendLog(api_key_id=test_api_key.id, recipient="repr@example.com", message_id="repr-msg-id")
         db_session.add(log)
@@ -95,7 +96,7 @@ class TestSendLogModel:
         assert "repr@example.com" in repr_str
         assert "sent_at=" in repr_str
 
-    async def test_send_log_query_by_recipient(self, db_session, test_api_key):
+    async def test_send_log_query_by_recipient(self, db_session: AsyncSession, test_api_key: APIKey):
         """Test querying logs by recipient email."""
         target_email = "target@example.com"
 
@@ -111,7 +112,7 @@ class TestSendLogModel:
         assert len(logs) >= 1
         assert all(log.recipient == target_email for log in logs)
 
-    async def test_send_log_query_by_message_id(self, db_session, test_api_key):
+    async def test_send_log_query_by_message_id(self, db_session: AsyncSession, test_api_key: APIKey):
         """Test querying logs by message_id."""
         message_id = "unique-message-id-xyz"
 
@@ -126,7 +127,7 @@ class TestSendLogModel:
         assert found_log is not None
         assert found_log.message_id == message_id
 
-    async def test_send_log_delete(self, db_session, test_api_key):
+    async def test_send_log_delete(self, db_session: AsyncSession, test_api_key: APIKey):
         """Test deleting a send log."""
         log = SendLog(api_key_id=test_api_key.id, recipient="delete@example.com")
         db_session.add(log)
@@ -143,7 +144,7 @@ class TestSendLogModel:
 
         assert found is None
 
-    async def test_send_log_recipient_email_formats(self, db_session, test_api_key):
+    async def test_send_log_recipient_email_formats(self, db_session: AsyncSession, test_api_key: APIKey):
         """Test various email formats in recipient field."""
         email_formats = [
             "simple@example.com",

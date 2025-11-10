@@ -80,7 +80,7 @@ class AuthService:
     async def validate_api_key(self, api_key: str) -> Optional[APIKey]:
         """Validate an API key and return the APIKey object if valid."""
         result, key_obj = await self.validate_api_key_detailed(api_key)
-        return key_obj if result == AuthResult.VALID else None
+        return key_obj if result.value == AuthResult.VALID.value else None
 
     async def create_api_key(
         self,
@@ -138,14 +138,14 @@ class AuthService:
             result = await self.db.execute(stmt)
             key_obj = result.scalar_one_or_none()
 
-            if key_obj:
+            if key_obj is not None:
                 key_obj.is_active = False
                 await self.db.flush()
 
                 logger.info(
                     "API key deactivated",
                     api_key_id=str(api_key_id),
-                    name=key_obj.name,
+                    # name=key_obj.name,
                 )
                 return True
             else:
