@@ -143,7 +143,7 @@ jobs:
         SMTP_USER: test@test.com
         SMTP_PASSWORD: test_password
         SMTP_FROM: noreply@test.com
-        APP_SECRET_KEY: test-secret-key-for-ci-testing
+        APP_SECRET_KEY: test-secret-key-for-testing-only-do-not-use-in-production
       run: |
         uv run pytest tests/unit -v --cov=app --cov-report=term
 
@@ -155,7 +155,7 @@ jobs:
         SMTP_USER: test@test.com
         SMTP_PASSWORD: test_password
         SMTP_FROM: noreply@test.com
-        APP_SECRET_KEY: test-secret-key-for-ci-testing
+        APP_SECRET_KEY: test-secret-key-for-testing-only-do-not-use-in-production
       run: |
         uv run pytest tests/integration -v --cov=app --cov-append --cov-report=term
 
@@ -167,7 +167,7 @@ jobs:
         SMTP_USER: test@test.com
         SMTP_PASSWORD: test_password
         SMTP_FROM: noreply@test.com
-        APP_SECRET_KEY: test-secret-key-for-ci-testing
+        APP_SECRET_KEY: test-secret-key-for-testing-only-do-not-use-in-production
       run: |
         uv run pytest tests/test_smoke.py -v
 
