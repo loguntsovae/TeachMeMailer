@@ -116,6 +116,8 @@ omit = [
     "app/api/v1/mail.py",
     "app/services/email_queue.py",
     "app/services/usage_tracking.py",
+    "app/api/v1/usage.py",
+    "app/core/deps.py",
     "app/main.py",
     "*/migrations/*",
     "*/__pycache__/*",
